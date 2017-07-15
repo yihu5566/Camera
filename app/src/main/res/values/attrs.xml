@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--添加了一个ImageTextButton的属性集  -->
+    <declare-styleable name="LProgressBar">
+        <attr name="innerColor" format="color" />
+        <attr name="outerColor" format="color" />
+        <attr name="progressColor" format="color" />
+        <attr name="innerRadio" format="dimension" />
+        <attr name="progressWidth" format="dimension" />
+        <attr name="maxSecond" format="integer" />
+    </declare-styleable>
+
+
+
+</resources>

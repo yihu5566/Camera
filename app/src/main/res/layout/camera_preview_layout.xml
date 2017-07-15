@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical">
+
+
+    <SurfaceView
+        android:id="@+id/cameraPreview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <VideoView
+        android:id="@+id/sv_video_play"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone" />
+
+    <ImageView
+        android:id="@+id/iv_home_back"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="fitXY"
+        android:visibility="gone" />
+
+    <RelativeLayout
+        android:id="@+id/rl_root_supernatant"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <RelativeLayout
+            android:id="@+id/rl_top_toggle_layout"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:background="@color/blank_bg">
+
+            <ImageView
+                android:id="@+id/tv_open_beauty"
+                android:layout_width="wrap_content"
+                android:layout_height="30dp"
+                android:layout_centerVertical="true"
+                android:layout_marginLeft="60dp"
+                android:gravity="center"
+                android:paddingLeft="10dp"
+                android:paddingRight="10dp"
+                android:text="闪光灯" />
+
+            <CheckBox
+                android:id="@+id/bnToggleLight"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_alignParentRight="true"
+                android:layout_marginBottom="11.5dp"
+                android:layout_marginRight="15dp"
+                android:layout_marginTop="11.5dp"
+                android:background="@drawable/bn_camera_capture_light_selector"
+                android:button="@null"
+                android:checked="false"
+                android:gravity="center" />
+
+            <ImageView
+                android:id="@+id/bnToggleCamera"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_alignParentLeft="true"
+                android:layout_marginBottom="11.5dp"
+                android:layout_marginLeft="15dp"
+                android:layout_marginTop="11.5dp"
+                android:gravity="center"
+                android:scaleType="center"
+                android:src="@drawable/rectangle_camera" />
+        </RelativeLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="50dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tv_photo_info"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textColor="@color/white" />
+
+        </LinearLayout>
+
+        <com.example.lxrent.camerademo.CaptureFocuseView
+            android:id="@+id/viewFocuse"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_centerInParent="true"
+            android:visibility="invisible" />
+
+        <LinearLayout
+            android:id="@+id/ll_preview_watermark"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_alignParentBottom="true"
+            android:layout_marginBottom="96dp"
+            android:layout_marginTop="50dp"
+            android:gravity="bottom"
+            android:orientation="vertical">
+
+
+        </LinearLayout>
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/rl_bottom_"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:layout_gravity="bottom"
+        android:background="@color/blank_bg">
+
+        <TextView
+            android:id="@+id/tv_cancel"
+            android:layout_width="wrap_content"
+            android:layout_height="30dp"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="10dp"
+            android:gravity="center"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:text="取消" />
+
+        <com.example.lxrent.camerademo.view.LProgressBar
+            android:id="@+id/bnCapture"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            app:innerColor="@android:color/white"
+            app:innerRadio="30dp"
+            app:maxSecond="5"
+            app:outerColor="@android:color/darker_gray"
+            app:progressColor="@android:color/holo_green_light"
+            app:progressWidth="10dp" />
+
+        <!--<com.example.lxrent.camerademo.view.LProgressBar-->
+        <!--android:id="@+id/bnCapture"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_centerHorizontal="true"-->
+        <!--android:layout_marginBottom="10dp"-->
+        <!--app:maxProgress="10"-->
+        <!--app:innerRadio="5dp"-->
+        <!--app:progressWidth="5dp"-->
+        <!--android:layout_marginTop="10dp"/>-->
+
+        <!--<ImageView-->
+        <!--android:id="@+id/bnCapture"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_centerHorizontal="true"-->
+        <!--android:layout_marginBottom="10dp"-->
+        <!--android:layout_marginTop="10dp"-->
+        <!--android:scaleType="center"-->
+        <!--android:src="@drawable/bn_camera_capture_selector"/>-->
+
+        <TextView
+            android:id="@+id/tv_confirm"
+            android:layout_width="wrap_content"
+            android:layout_height="30dp"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:layout_marginRight="10dp"
+            android:gravity="center"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:text="使用"
+            android:visibility="invisible" />
+    </RelativeLayout>
+
+
+</FrameLayout>
