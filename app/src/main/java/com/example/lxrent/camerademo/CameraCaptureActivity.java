@@ -75,35 +75,6 @@ public class CameraCaptureActivity extends Activity implements SurfaceHolder.Cal
     private Camera.Size mSize;
     private String videoPath;
 
-    //    private int recLen = 1;
-//    Timer timer = new Timer();
-//    TimerTask task = new TimerTask() {
-//        @Override
-//        public void run() {
-//            runOnUiThread(new Runnable() {      // UI thread
-//                @Override
-//                public void run() {
-//                    recLen++;
-//                    bnCapture.setProgress(recLen);
-//                    if (recLen > 10) {
-//                        timer.cancel();
-//                        stopRecord();
-//                        bnCapture.setVisibility(View.GONE);
-//                        playVideo(mHolder);
-//                    }
-//                }
-//            });
-//        }
-//    };
-    //    Handler mHandler = new Handler() {
-//        @Override
-//        public void handleMessage(Message msg) {
-//            stopRecord();
-//            bnCapture.setClickable(true);
-//            Toast.makeText(getApplicationContext(), "录制完毕，马上播放", Toast.LENGTH_SHORT).show();
-//            playVideo(mHolder);
-//        }
-//    };
     private MediaPlayer mMediaPlayer;
     private VideoView sv_video_play;
     private TextView tv_confirm;
@@ -116,7 +87,6 @@ public class CameraCaptureActivity extends Activity implements SurfaceHolder.Cal
         mMediaPlayer.setDisplay(mHolder);
         mMediaPlayer.getCurrentPosition();
         //设置显示视频显示在SurfaceView上
-//        String path = getSDPath() + "/videos/" + "1493888903914.mp4";
         Log.d(TAG, videoPath);
         try {
             mMediaPlayer.setDataSource(videoPath);
@@ -519,9 +489,6 @@ public class CameraCaptureActivity extends Activity implements SurfaceHolder.Cal
             try {
                 mCamera = Camera.open(currentCameraId);
                 //谷歌6p打开相机会闪一次，强制进行关闭闪光灯。
-//                Camera.Parameters parameter = camera.getParameters();
-//                parameter.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
-//                camera.setParameters(parameter);
             } catch (Exception e) {
                 Toast.makeText(this, "摄像头打开失败", Toast.LENGTH_SHORT).show();
                 finish();
