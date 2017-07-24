@@ -3,7 +3,7 @@
 
 下面是录像的过程（有点卡）：
 
-![Untitled](/Users/lxrent/Documents/Untitled.gif)
+![Untitled](/Users/lxrent/Documents/gitCamera/Camera/Untitled.gif)
 
 
 

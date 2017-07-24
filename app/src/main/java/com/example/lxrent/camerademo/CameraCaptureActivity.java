@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.ImageFormat;
 import android.hardware.Camera;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -302,6 +303,7 @@ public class CameraCaptureActivity extends Activity implements SurfaceHolder.Cal
         List<Camera.Size> sizes = parameters.getSupportedPreviewSizes();
         Camera.Size optimalPreviewSize = getOptimalPreviewSize(sizes, screenHeight, screenWidth);
         parameters.setPreviewSize(optimalPreviewSize.width, optimalPreviewSize.height);
+        parameters.setPreviewFormat(ImageFormat.YV12);
         cameraPreview.setLayoutParams(new FrameLayout.LayoutParams(optimalPreviewSize.height, optimalPreviewSize.width));
         //获取video的尺寸
         List<Camera.Size> supportedVideoSizes1 = parameters.getSupportedVideoSizes();
@@ -622,7 +624,7 @@ public class CameraCaptureActivity extends Activity implements SurfaceHolder.Cal
             if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
                 _rotationfront = (info.orientation - orientation + 360) % 360;
             } else { // back-facing camera
-                _rotation = (info.orientation + orientation) % 360;
+//                _rotation = (info.orientation + orientation) % 360;
             }
 //            Log.d(TAG, "Camera_rotation--" +"info"+info.orientation+ "orientation" + orientation);
             //  Log.d(TAG, "Camera_rotation--" + "rotation" + _rotation);
