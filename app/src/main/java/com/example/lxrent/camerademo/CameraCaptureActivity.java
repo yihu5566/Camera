@@ -1,5 +1,6 @@
 package com.example.lxrent.camerademo;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -13,6 +14,9 @@ import android.media.MediaRecorder;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.OrientationEventListener;
 import android.view.Surface;
@@ -79,6 +83,9 @@ public class CameraCaptureActivity extends Activity implements SurfaceHolder.Cal
     private MediaPlayer mMediaPlayer;
     private VideoView sv_video_play;
     private TextView tv_confirm;
+
+    private static int REQUEST_CAMERA = 1;
+
 
     private void playVideo(final SurfaceHolder mHolder) {
         releaseMediaRecorder();
@@ -489,7 +496,16 @@ public class CameraCaptureActivity extends Activity implements SurfaceHolder.Cal
         Log.d("onDestroy--", "openCamera");
         if (Build.VERSION.SDK_INT > 8) {
             try {
-                mCamera = Camera.open(currentCameraId);
+                if (ContextCompat.checkSelfPermission(this,
+                        Manifest.permission.CAMERA)
+                        != PackageManager.PERMISSION_GRANTED) {
+
+                    ActivityCompat.requestPermissions(this,
+                            new String[]{Manifest.permission.CAMERA},
+                            REQUEST_CAMERA);
+                } else {
+                    mCamera = Camera.open(currentCameraId);
+                }
                 //谷歌6p打开相机会闪一次，强制进行关闭闪光灯。
             } catch (Exception e) {
                 Toast.makeText(this, "摄像头打开失败", Toast.LENGTH_SHORT).show();
@@ -527,6 +543,26 @@ public class CameraCaptureActivity extends Activity implements SurfaceHolder.Cal
         /****************/
         observer.start();
         _orientationEventListener.enable();
+    }
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+//判断请求码，确定当前申请的权限
+        if (requestCode == REQUEST_CAMERA) {
+            //判断权限是否申请通过
+            if (grantResults.length == 1 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                //授权成功
+                mCamera = Camera.open(currentCameraId);
+            } else {
+                //授权失败
+                Toast.makeText(this, "授权失败", Toast.LENGTH_SHORT).show();
+
+            }
+        } else {
+            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        }
+
     }
 
     /**
