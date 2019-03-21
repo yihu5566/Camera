@@ -27,7 +27,8 @@
             android:screenOrientation="portrait"
             android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
             android:windowSoftInputMode="adjustResize|stateHidden"></activity>
-    <activity android:name=".MediaRecorderActivity"/><!-- ATTENTION: This was auto-generated to add Google Play services to your project for
+    <activity android:name=".MediaRecorderActivity"/>
+        <!-- ATTENTION: This was auto-generated to add Google Play services to your project for
      App Indexing.  See https://g.co/AppIndexing/AndroidStudio for more information. -->
         <meta-data
             android:name="com.google.android.gms.version"

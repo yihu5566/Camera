@@ -9,14 +9,18 @@ import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
 import android.hardware.Camera;
 import android.media.AudioManager;
+import android.media.CamcorderProfile;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.OrientationEventListener;
 import android.view.Surface;
@@ -28,17 +32,22 @@ import android.view.animation.AnimationUtils;
 import android.widget.CheckBox;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.VideoView;
 
 import com.example.lxrent.camerademo.util.BitmapUtil;
+import com.example.lxrent.camerademo.util.CompressVideoUtils;
 import com.example.lxrent.camerademo.util.FSScreen2;
 import com.example.lxrent.camerademo.util.PathManager;
 import com.example.lxrent.camerademo.view.LProgressBar;
+import com.vincent.videocompressor.VideoCompress;
 
 import java.io.File;
+import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.util.List;
 
 /**
@@ -46,7 +55,7 @@ import java.util.List;
  * <p>
  * God love people
  * <p>
- * description:
+ * description: 需要添加读写文件的权限的
  */
 public class CameraCaptureActivity extends Activity implements SurfaceHolder.Callback, View.OnClickListener, CaptureSensorsObserver.RefocuseListener {
     private static String TAG = CameraCaptureActivity.class.getSimpleName();
@@ -78,53 +87,53 @@ public class CameraCaptureActivity extends Activity implements SurfaceHolder.Cal
     private int screenWidth;
     private int screenHeight;
     private Camera.Size mSize;
-    private String videoPath;
+    private String videoPath = "";
 
     private MediaPlayer mMediaPlayer;
-    private VideoView sv_video_play;
+    private ProgressBar sv_video_play;
     private TextView tv_confirm;
 
     private static int REQUEST_CAMERA = 1;
+    private CameraHandler cameraHandler;
 
 
-    private void playVideo(final SurfaceHolder mHolder) {
-        releaseMediaRecorder();
-        releaseCamera();
-        mHolder.removeCallback(this);
-        mMediaPlayer = new MediaPlayer();
-        mMediaPlayer.setDisplay(mHolder);
-        mMediaPlayer.getCurrentPosition();
-        //设置显示视频显示在SurfaceView上
-        Log.d(TAG, videoPath);
-        try {
-            mMediaPlayer.setDataSource(videoPath);
-            mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-            mMediaPlayer.prepareAsync();
-            mMediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-                @Override
-                public void onPrepared(MediaPlayer mp) {
-                    mp.start();
-                }
-            });
-            mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                @Override
-                public void onCompletion(MediaPlayer mp) {
-                    bnCapture.setClickable(true);
-                }
-            });
+    class CameraHandler extends Handler {
 
-        } catch (Exception e) {
-            e.printStackTrace();
+        WeakReference<Activity> abcWeakRef;
+
+        public CameraHandler(Activity activity) {
+            abcWeakRef = new WeakReference<>(activity);
         }
 
+        @Override
+        public void handleMessage(Message msg) {
+            final Activity activity = abcWeakRef.get();
+            if (activity != null) {
+                Bundle bundle = msg.getData();
+                String path = bundle.getString("path");
+
+                switch (msg.what) {
+                    case 1:
+                        playVideo(mHolder, path);
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+        }
     }
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.camera_preview_layout);
-        _orientationEventListener = new CaptureOrientationEventListener(this);//屏幕旋转监听
-        observer = new CaptureSensorsObserver(this);//传感器监听
+        //屏幕旋转监听
+        _orientationEventListener = new CaptureOrientationEventListener(this);
+        //传感器监听
+        observer = new CaptureSensorsObserver(this);
+        cameraHandler = new CameraHandler(this);
         initView();
         initListener();
         setupDevice();
@@ -201,15 +210,15 @@ public class CameraCaptureActivity extends Activity implements SurfaceHolder.Cal
 
 
     private void initView() {
-        cameraPreview = (SurfaceView) findViewById(R.id.cameraPreview);
-        bnCapture = (LProgressBar) findViewById(R.id.bnCapture);
-        focuseView = (CaptureFocuseView) findViewById(R.id.viewFocuse);
-        rl_root_supernatant = (RelativeLayout) findViewById(R.id.rl_root_supernatant);
-        bnToggleCamera = (ImageView) findViewById(R.id.bnToggleCamera);
-        bnToggleLight = (CheckBox) findViewById(R.id.bnToggleLight);
-        tv_cancel = (TextView) findViewById(R.id.tv_cancel);
-        sv_video_play = (VideoView) findViewById(R.id.sv_video_play);
-        tv_confirm = (TextView) findViewById(R.id.tv_confirm);
+        cameraPreview = findViewById(R.id.cameraPreview);
+        bnCapture = findViewById(R.id.bnCapture);
+        focuseView = findViewById(R.id.viewFocuse);
+        rl_root_supernatant = findViewById(R.id.rl_root_supernatant);
+        bnToggleCamera = findViewById(R.id.bnToggleCamera);
+        bnToggleLight = findViewById(R.id.bnToggleLight);
+        tv_cancel = findViewById(R.id.tv_cancel);
+        sv_video_play = findViewById(R.id.sv_video_play);
+        tv_confirm = findViewById(R.id.tv_confirm);
 
 
         mHolder = cameraPreview.getHolder();
@@ -255,7 +264,8 @@ public class CameraCaptureActivity extends Activity implements SurfaceHolder.Cal
             public void onLongClickUp(LProgressBar progressBar) {
                 //抬起的话直接取消录制，并切删除录制的文件
                 stopRecord();
-                playVideo(mHolder);
+                startCompress(videoPath);
+
             }
         });
 
@@ -360,6 +370,8 @@ public class CameraCaptureActivity extends Activity implements SurfaceHolder.Cal
             case R.id.tv_confirm:
                 finish();
                 break;
+            default:
+                break;
 
         }
     }
@@ -377,42 +389,47 @@ public class CameraCaptureActivity extends Activity implements SurfaceHolder.Cal
             mCamera.unlock();
             mRecorder.setCamera(mCamera);
         }
+        videoPath = getSDPath();
+
         try {
             // 设置音频采集方式
             mRecorder.setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
             //设置视频的采集方式
             mRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
             //设置文件的输出格式
-            mRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);//aac_adif， aac_adts， output_format_rtp_avp， output_format_mpeg2ts ，webm
+//            mRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
             //设置audio的编码格式
-            mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+//            mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
             //设置video的编码格式
-            mRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.MPEG_4_SP);
+//            mRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
             //设置录制的视频编码比特率
-            mRecorder.setVideoEncodingBitRate(2 * 1024 * 1024);// 设置帧频率，然后就清晰了
-//            CamcorderProfile cProfile = CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH);
-//            mRecorder.setProfile(cProfile);
+            mRecorder.setVideoEncodingBitRate(5 * 1024 * 1024);
+            // 设置帧频率，然后就清晰了
+            mRecorder.setProfile(CamcorderProfile.get(CamcorderProfile.QUALITY_480P));
             //设置录制的视频帧率,注意文档的说明:
             mRecorder.setVideoFrameRate(30);
             //设置要捕获的视频的宽度和高度
-            mHolder.setFixedSize(mSize.width, mSize.height);//最高只能设置640x480
-            mRecorder.setVideoSize(mSize.width, mSize.height);//最高只能设置640x480
+            mHolder.setFixedSize(mSize.width, mSize.height);
+            //最高只能设置640x480
+            mRecorder.setVideoSize(mSize.width, mSize.height);
             //设置记录会话的最大持续时间（毫秒）
             mRecorder.setMaxDuration(60 * 1000);
             // 输出旋转90度，保持竖屏录制
             mRecorder.setOrientationHint(90);
 //注释掉并无影响，猜测是camera设置过显示就可以了
 //            mRecorder.setPreviewDisplay(mHolder.getSurface());
-            videoPath = getSDPath();
-            if (videoPath != null) {
-                File dir = new File(videoPath + "/videos");
-                if (!dir.exists()) {
-                    dir.mkdirs();
-                }
-                videoPath = dir + "/" + System.currentTimeMillis() + ".mp4";
+            if (!TextUtils.isEmpty(videoPath)) {
+//                File dir = new File(videoPath + "/videos");
+//                if (!dir.exists()) {
+//                    dir.mkdirs();
+//                }
+//                videoPath = videoPath + "/" + System.currentTimeMillis() + ".mp4";
+                //获取裁剪后的图片路径
+                File photoFile = PathManager.getCropVideoPath();
+                videoPath = photoFile.getAbsolutePath();
+                Log.i(TAG, "startRecord----path" + videoPath);
                 //设置输出文件的路径
                 mRecorder.setOutputFile(videoPath);
-                Log.i(TAG, "startRecord----path" + videoPath);
                 //准备录制
                 mRecorder.prepare();
                 //开始录制
@@ -424,14 +441,24 @@ public class CameraCaptureActivity extends Activity implements SurfaceHolder.Cal
         }
     }
 
+    int REQUEST_CODE_CONTACT = 101;
+
     public String getSDPath() {
-        File sdDir = null;
-        boolean sdCardExist = Environment.getExternalStorageState()
-                .equals(android.os.Environment.MEDIA_MOUNTED);//判断sd卡是否存在
-        if (sdCardExist) {
-            sdDir = Environment.getExternalStorageDirectory();//获取跟目录
+        //申请权限,存储和录音
+        if (Build.VERSION.SDK_INT >= 23) {
+            String[] permissions = {Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.RECORD_AUDIO};
+            //验证是否许可权限
+            for (String str : permissions) {
+                if (this.checkSelfPermission(str) != PackageManager.PERMISSION_GRANTED) {
+                    //申请权限
+                    this.requestPermissions(permissions, REQUEST_CODE_CONTACT);
+
+                    return "";
+                }
+            }
         }
-        return sdDir.toString();
+
+        return PathManager.getCropPhotoDir().getAbsolutePath();
     }
 
     /**
@@ -450,6 +477,41 @@ public class CameraCaptureActivity extends Activity implements SurfaceHolder.Cal
             e.printStackTrace();
         }
         isRecording = false;
+    }
+
+
+    private void playVideo(final SurfaceHolder mHolder, String videoPath) {
+        releaseMediaRecorder();
+        releaseCamera();
+        mHolder.removeCallback(this);
+        mMediaPlayer = new MediaPlayer();
+        mMediaPlayer.setDisplay(mHolder);
+        mMediaPlayer.getCurrentPosition();
+        //设置显示视频显示在SurfaceView上
+        Log.d(TAG, videoPath);
+        try {
+            Log.d(TAG, "压缩后的路径：" + videoPath);
+            //使用压缩过的视频
+            mMediaPlayer.setDataSource(videoPath);
+            mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+            mMediaPlayer.prepareAsync();
+            mMediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                @Override
+                public void onPrepared(MediaPlayer mp) {
+                    mp.start();
+                }
+            });
+
+            mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                @Override
+                public void onCompletion(MediaPlayer mp) {
+                    bnCapture.setClickable(true);
+                }
+            });
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void openORCloseLight() {
@@ -603,6 +665,8 @@ public class CameraCaptureActivity extends Activity implements SurfaceHolder.Cal
             case Surface.ROTATION_270:
                 degrees = 270;
                 break;
+            default:
+                break;
         }
 
         int result;
@@ -707,5 +771,47 @@ public class CameraCaptureActivity extends Activity implements SurfaceHolder.Cal
 
 
         return optimalSize;
+    }
+
+    private void startCompress(final String srcPath) {
+        final String resultPath = PathManager.getCropVideoTempPath().toString();
+        final Bundle bundle = new Bundle();
+        VideoCompress.compressVideoLow(srcPath, resultPath, new VideoCompress.CompressListener() {
+            @Override
+            public void onStart() {
+                //Start Compress
+                sv_video_play.setVisibility(View.VISIBLE);
+            }
+
+            @Override
+            public void onSuccess() {
+                //Finish successfully
+                Message message = cameraHandler.obtainMessage();
+                bundle.putString("path", resultPath);
+                message.setData(bundle);
+                message.what = 1;
+                cameraHandler.sendMessage(message);
+                sv_video_play.setVisibility(View.GONE);
+
+            }
+
+            @Override
+            public void onFail() {
+                Message message = cameraHandler.obtainMessage();
+                bundle.putString("path", srcPath);
+                message.setData(bundle);
+                message.what = 1;
+                cameraHandler.sendMessage(message);
+                sv_video_play.setVisibility(View.GONE);
+
+            }
+
+            @Override
+            public void onProgress(float percent) {
+                //Progress
+
+            }
+        });
+
     }
 }
